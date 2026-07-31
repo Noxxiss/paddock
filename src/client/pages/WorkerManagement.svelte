@@ -208,6 +208,18 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  }
+
+  .back:hover:not(:disabled) {
+    background: #4a90d9;
+    color: white;
+  }
+
+  .back:active:not(:disabled) {
+    background: #357abd;
+    color: white;
+    transform: scale(0.97);
   }
 
   .section {
@@ -260,10 +272,21 @@
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+  }
+
+  button[type="submit"]:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  button[type="submit"]:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
   }
 
   button[type="submit"]:disabled {
     opacity: 0.6;
+    cursor: default;
   }
 
   .invite-result {
@@ -305,6 +328,16 @@
     font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+
+  .copy-btn:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  .copy-btn:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
   }
 
   .invite-hint {
@@ -360,10 +393,21 @@
     border-radius: 4px;
     font-size: 0.8rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+  }
+
+  .remove-btn:hover:not(:disabled) {
+    background: #b71c1c;
+  }
+
+  .remove-btn:active:not(:disabled) {
+    background: #9b1a1a;
+    transform: scale(0.97);
   }
 
   .remove-btn:disabled {
     opacity: 0.6;
+    cursor: default;
   }
 
   .error {

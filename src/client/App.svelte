@@ -163,5 +163,20 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
+  }
+
+  button:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  button:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
   }
 </style>

@@ -63,6 +63,16 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+
+  .cancel-btn:hover {
+    background: #7f8c8d;
+  }
+
+  .cancel-btn:active {
+    background: #6b7a7b;
+    transform: scale(0.97);
   }
 
   .confirm-btn {
@@ -73,21 +83,28 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
-  }
-
-  .confirm-btn.danger {
-    background: #e74c3c;
-  }
-
-  .cancel-btn:hover {
-    background: #7f8c8d;
+    transition: background 0.15s ease, transform 0.12s ease;
   }
 
   .confirm-btn:hover {
     background: #357abd;
   }
 
+  .confirm-btn:active {
+    background: #2a5f94;
+    transform: scale(0.97);
+  }
+
+  .confirm-btn.danger {
+    background: #e74c3c;
+  }
+
   .confirm-btn.danger:hover {
     background: #c0392b;
+  }
+
+  .confirm-btn.danger:active {
+    background: #a93226;
+    transform: scale(0.97);
   }
 </style>

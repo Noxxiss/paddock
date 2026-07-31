@@ -433,10 +433,16 @@
     font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
   }
 
   .header-btn:hover {
     background: rgba(255,255,255,0.2);
+  }
+
+  .header-btn:active {
+    background: rgba(255,255,255,0.3);
+    transform: scale(0.97);
   }
 
   .header-btn.secondary {
@@ -448,6 +454,12 @@
   .header-btn.secondary:hover {
     opacity: 1;
     background: rgba(255,255,255,0.1);
+  }
+
+  .header-btn.secondary:active {
+    opacity: 1;
+    background: rgba(255,255,255,0.2);
+    transform: scale(0.97);
   }
 
   .loading-overlay {
@@ -515,9 +527,20 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
   }
 
   :global(.complete-btn:hover) {
     background: #219a52;
+  }
+
+  :global(.complete-btn:active) {
+    background: #1a7a3e;
+    transform: scale(0.97);
+  }
+
+  :global(.complete-btn:disabled) {
+    opacity: 0.5;
+    cursor: default;
   }
 </style>
