@@ -116,7 +116,7 @@
     {:else if page === 'farm-setup'}
       <FarmSetup oncreate={handleCreate} />
     {:else if page === 'farm-settings'}
-      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} onmanageworkers={() => page = 'workers'} />
+      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} onmanageworkers={() => page = 'workers'} onback={() => page = 'map'} />
     {:else if page === 'workers'}
       <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}

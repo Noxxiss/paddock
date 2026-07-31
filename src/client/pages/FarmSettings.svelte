@@ -1,7 +1,7 @@
 <script>
   import FarmMap from '../lib/FarmMap.svelte';
 
-  let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers } = $props();
+  let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers, onback } = $props();
 
   let farmName = $state('');
   let boundary = $state(null);
@@ -59,6 +59,7 @@
 </script>
 
 <div class="farm-settings">
+  <button class="back-btn" onclick={onback}>&larr; Back to map</button>
   <h1>Farm settings</h1>
 
   <form onsubmit={handleSubmit}>
@@ -98,6 +99,21 @@
   .farm-settings {
     max-width: 600px;
     margin: 0 auto;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: #4a90d9;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0;
+    margin: 0 0 8px;
+    display: inline-block;
+  }
+
+  .back-btn:hover {
+    text-decoration: underline;
   }
 
   h1 {
