@@ -7,6 +7,7 @@
   import WorkerManagement from './pages/WorkerManagement.svelte';
   import TaskCreate from './pages/TaskCreate.svelte';
   import MapView from './pages/MapView.svelte';
+  import ListView from './pages/ListView.svelte';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
@@ -97,8 +98,10 @@
       <PaddockList onback={() => page = 'farm-settings'} />
     {:else if page === 'create-task'}
       <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
+    {:else if page === 'list'}
+      <ListView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotosettings={() => page = 'farm-settings'} ongotomap={() => page = 'map'} />
     {:else}
-      <MapView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotosettings={() => page = 'farm-settings'} />
+      <MapView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotolist={() => page = 'list'} ongotosettings={() => page = 'farm-settings'} />
     {/if}
   {:else if page === 'login'}
     <Login onlogin={handleAuth} onswitch={() => page = 'register'} />

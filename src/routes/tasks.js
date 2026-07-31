@@ -120,4 +120,53 @@ router.get('/api/tasks', authMiddleware, (req, res) => {
   res.json({ tasks });
 });
 
+router.patch('/api/tasks/reorder', authMiddleware, (req, res) => {
+  const { order } = req.body;
+
+  if (!order || !Array.isArray(order)) {
+    return res.status(400).json({ error: 'order must be an array of { id, order }' });
+  }
+
+  if (order.length === 0) {
+    return res.status(400).json({ error: 'order array must not be empty' });
+  }
+
+  const seen = new Set();
+  for (const item of order) {
+    if (!item.id || !Number.isInteger(item.order)) {
+      return res.status(400).json({ error: 'each item in order must have an id and an integer order value' });
+    }
+    if (seen.has(item.id)) {
+      return res.status(400).json({ error: `duplicate task id in order: ${item.id}` });
+    }
+    seen.add(item.id);
+  }
+
+  const db = getDb();
+
+  const ids = order.map(i => i.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const owned = db.prepare(
+    `SELECT id FROM tasks WHERE id IN (${placeholders}) AND farm_id = ?`
+  ).all(...ids, req.user.farm_id);
+
+  const ownedIds = new Set(owned.map(r => r.id));
+  const unknownIds = ids.filter(id => !ownedIds.has(id));
+  if (unknownIds.length > 0) {
+    return res.status(400).json({ error: 'some task ids do not exist on this farm', unknownIds });
+  }
+
+  const updateStmt = db.prepare(
+    'UPDATE tasks SET "order" = ? WHERE id = ? AND farm_id = ?'
+  );
+
+  db.transaction(() => {
+    for (const item of order) {
+      updateStmt.run(item.order, item.id, req.user.farm_id);
+    }
+  })();
+
+  res.json({ success: true });
+});
+
 module.exports = router;

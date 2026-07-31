@@ -3,7 +3,7 @@
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
 
-  let { farm, user, onlogout, ongotocreatetask, ongotosettings } = $props();
+  let { farm, user, onlogout, ongotocreatetask, ongotosettings, ongotolist } = $props();
 
   let mapContainer = $state(null);
   let map;
@@ -243,6 +243,7 @@
         </span>
       {/if}
       <button class="header-btn" onclick={ongotocreatetask}>+ Task</button>
+      <button class="header-btn secondary" onclick={ongotolist}>List view</button>
       <button class="header-btn secondary" onclick={ongotosettings}>Settings</button>
       <button class="header-btn secondary" onclick={onlogout}>Log out</button>
     </div>

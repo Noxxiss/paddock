@@ -370,6 +370,124 @@ describe('GET /api/tasks', () => {
   });
 });
 
+describe('PATCH /api/tasks/reorder', () => {
+  test('reorders tasks and persists new order indices', async () => {
+    // Create 3 tasks in known order
+    const t1 = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ title: 'Reorder A', location_type: 'drawing', location_geojson: { type: 'Point', coordinates: [0, 0] } });
+    const t2 = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ title: 'Reorder B', location_type: 'drawing', location_geojson: { type: 'Point', coordinates: [1, 1] } });
+    const t3 = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ title: 'Reorder C', location_type: 'drawing', location_geojson: { type: 'Point', coordinates: [2, 2] } });
+
+    // Verify initial order (created sequentially)
+    let getRes = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+    const initial = getRes.body.tasks.filter(t => t.title.startsWith('Reorder '));
+    assert.strictEqual(initial.length, 3);
+    const aOrder = initial.find(t => t.title === 'Reorder A').order;
+    const bOrder = initial.find(t => t.title === 'Reorder B').order;
+    const cOrder = initial.find(t => t.title === 'Reorder C').order;
+    assert.ok(aOrder < bOrder, 'A should come before B');
+    assert.ok(bOrder < cOrder, 'B should come before C');
+
+    // Reorder: move C to front, A to end
+    const newOrder = [
+      { id: t3.body.task.id, order: aOrder },
+      { id: t2.body.task.id, order: bOrder },
+      { id: t1.body.task.id, order: cOrder },
+    ];
+
+    const reorderRes = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ order: newOrder });
+
+    assert.strictEqual(reorderRes.status, 200);
+
+    // Verify new order via GET
+    getRes = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+    const reordered = getRes.body.tasks.filter(t => t.title.startsWith('Reorder '));
+    assert.strictEqual(reordered[0].title, 'Reorder C');
+    assert.strictEqual(reordered[1].title, 'Reorder B');
+    assert.strictEqual(reordered[2].title, 'Reorder A');
+  });
+
+  test('returns 400 without order array', async () => {
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({});
+
+    assert.strictEqual(res.status, 400);
+  });
+
+  test('returns 400 if order is not an array', async () => {
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ order: 'not-an-array' });
+
+    assert.strictEqual(res.status, 400);
+  });
+
+  test('returns 400 if order item has missing fields', async () => {
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ order: [{ id: 1 }] });
+
+    assert.strictEqual(res.status, 400);
+  });
+
+  test('returns 401 without auth', async () => {
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .send({ order: [] });
+
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('rejects task ids that do not belong to the farm', async () => {
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ order: [{ id: 99999, order: 0 }] });
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error);
+    assert.ok(res.body.unknownIds);
+    assert.strictEqual(res.body.unknownIds[0], 99999);
+  });
+
+  test('rejects duplicate task ids in order', async () => {
+    // Create a task to use
+    const createRes = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ title: 'Dup test', location_type: 'drawing', location_geojson: { type: 'Point', coordinates: [0, 0] } });
+
+    const taskId = createRes.body.task.id;
+
+    const res = await request
+      .patch('/api/tasks/reorder')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ order: [{ id: taskId, order: 0 }, { id: taskId, order: 1 }] });
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error.includes('duplicate'));
+  });
+});
+
 describe('Map view data', () => {
   test('tasks data includes all fields needed for map rendering', async () => {
     const res = await request
