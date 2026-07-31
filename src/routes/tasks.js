@@ -250,6 +250,82 @@ router.get('/api/tasks/:id', authMiddleware, (req, res) => {
   res.json({ task });
 });
 
+router.post('/api/tasks/:id/comments', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const { body } = req.body;
+
+  if (!body || !body.trim()) {
+    return res.status(400).json({ error: 'body is required' });
+  }
+
+  const db = getDb();
+
+  const task = db.prepare(
+    'SELECT id, farm_id FROM tasks WHERE id = ?'
+  ).get(id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  if (task.farm_id !== req.user.farm_id) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  const result = db.prepare(`
+    INSERT INTO comments (task_id, author_id, body)
+    VALUES (?, ?, ?)
+  `).run(id, req.user.id, body.trim());
+
+  const comment = db.prepare(`
+    SELECT
+      c.id,
+      c.task_id,
+      c.author_id,
+      c.body,
+      c.created_at,
+      u.name AS author_name
+    FROM comments c
+    LEFT JOIN users u ON u.id = c.author_id
+    WHERE c.id = ?
+  `).get(result.lastInsertRowid);
+
+  res.status(201).json({ comment });
+});
+
+router.get('/api/tasks/:id/comments', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+
+  const task = db.prepare(
+    'SELECT id, farm_id FROM tasks WHERE id = ?'
+  ).get(id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  if (task.farm_id !== req.user.farm_id) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  const comments = db.prepare(`
+    SELECT
+      c.id,
+      c.task_id,
+      c.author_id,
+      c.body,
+      c.created_at,
+      u.name AS author_name
+    FROM comments c
+    LEFT JOIN users u ON u.id = c.author_id
+    WHERE c.task_id = ?
+    ORDER BY c.created_at ASC
+  `).all(id);
+
+  res.json({ comments });
+});
+
 router.get('/api/completion-log', authMiddleware, (req, res) => {
   const db = getDb();
 

@@ -705,3 +705,157 @@ describe('Map view data', () => {
     }
   });
 });
+
+describe('Task comments', () => {
+  let commentTaskId;
+
+  test('setup: create a task to comment on', async () => {
+    const res = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        title: 'Commentable task',
+        location_type: 'drawing',
+        location_geojson: { type: 'Point', coordinates: [20, 20] },
+      });
+
+    assert.strictEqual(res.status, 201);
+    commentTaskId = res.body.task.id;
+  });
+
+  test('POST /api/tasks/:id/comments creates a comment', async () => {
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ body: 'This is a test comment' });
+
+    assert.strictEqual(res.status, 201);
+    assert.ok(res.body.comment.id);
+    assert.strictEqual(res.body.comment.body, 'This is a test comment');
+    assert.strictEqual(res.body.comment.task_id, commentTaskId);
+    assert.strictEqual(res.body.comment.author_id, managerUser.id);
+    assert.ok(res.body.comment.created_at);
+  });
+
+  test('POST returns 400 for empty comment body', async () => {
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ body: '' });
+
+    assert.strictEqual(res.status, 400);
+  });
+
+  test('POST returns 400 for missing comment body', async () => {
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({});
+
+    assert.strictEqual(res.status, 400);
+  });
+
+  test('POST returns 404 for non-existent task', async () => {
+    const res = await request
+      .post('/api/tasks/99999/comments')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ body: 'Comment on missing task' });
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('GET /api/tasks/:id/comments returns comments in chronological order', async () => {
+    // Create a second comment as worker
+    const res2 = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ body: 'Worker reply' });
+
+    assert.strictEqual(res2.status, 201);
+
+    const getRes = await request
+      .get(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(getRes.status, 200);
+    assert.ok(Array.isArray(getRes.body.comments));
+    assert.strictEqual(getRes.body.comments.length, 2);
+
+    // First comment should be earliest
+    assert.strictEqual(getRes.body.comments[0].body, 'This is a test comment');
+    assert.strictEqual(getRes.body.comments[1].body, 'Worker reply');
+  });
+
+  test('GET returns comments with author name', async () => {
+    const getRes = await request
+      .get(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(getRes.status, 200);
+    const managerComment = getRes.body.comments.find(c => c.author_id === managerUser.id);
+    assert.ok(managerComment);
+    assert.strictEqual(managerComment.author_name, 'Task Manager');
+
+    const workerComment = getRes.body.comments.find(c => c.body === 'Worker reply');
+    assert.ok(workerComment);
+    assert.strictEqual(workerComment.author_name, 'Task Worker');
+  });
+
+  test('GET returns 404 for non-existent task', async () => {
+    const res = await request
+      .get('/api/tasks/99999/comments')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('POST returns 401 without auth', async () => {
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .send({ body: 'No auth' });
+
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('GET returns 401 without auth', async () => {
+    const res = await request
+      .get(`/api/tasks/${commentTaskId}/comments`);
+
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('worker can create a comment', async () => {
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${workerToken}`)
+      .send({ body: 'Worker comment test' });
+
+    assert.strictEqual(res.status, 201);
+    assert.strictEqual(res.body.comment.body, 'Worker comment test');
+  });
+
+  test('POST returns 404 for task on other farm', async () => {
+    const otherToken = generateToken({
+      id: 99990, email: 'other@test.com', role: 'worker', farm_id: 99999,
+    });
+
+    const res = await request
+      .post(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${otherToken}`)
+      .send({ body: 'Other farm comment' });
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('GET returns 404 for task on other farm', async () => {
+    const otherToken = generateToken({
+      id: 99990, email: 'other@test.com', role: 'worker', farm_id: 99999,
+    });
+
+    const res = await request
+      .get(`/api/tasks/${commentTaskId}/comments`)
+      .set('Authorization', `Bearer ${otherToken}`);
+
+    assert.strictEqual(res.status, 404);
+  });
+});

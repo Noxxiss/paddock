@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
 
-  let { farm, user, onlogout, ongotocreatetask, ongotosettings, ongotomap } = $props();
+  let { farm, user, onlogout, ongotocreatetask, ongotosettings, ongotomap, ongototaskdetail } = $props();
 
   let tasks = $state([]);
   let loading = $state(true);
@@ -191,7 +191,8 @@
           ondragend={handleDragEnd}
         >
           <div class="drag-handle" tabindex="-1">{@html '&#x2630;'}</div>
-          <div class="task-info">
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div class="task-info" onclick={() => ongototaskdetail(task.id)} onkeydown={(e) => e.key === 'Enter' && ongototaskdetail(task.id)} role="button" tabindex="0">
             <div class="task-title">{task.title}</div>
             <div class="task-meta">
               <span class="priority-badge priority-{task.priority}">{priorityLabel[task.priority] || task.priority}</span>
@@ -381,6 +382,7 @@
   .task-info {
     flex: 1;
     min-width: 0;
+    cursor: pointer;
   }
 
   .task-title {

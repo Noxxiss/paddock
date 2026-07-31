@@ -4,10 +4,10 @@
 
 **Blocked by:** 06 — Create task with location
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Comment input at the bottom of the task detail view
-- [ ] `POST /api/tasks/:id/comments` creates a comment with author and body
-- [ ] `GET /api/tasks/:id/comments` returns comments in chronological order
-- [ ] Each comment displays author name and relative timestamp
-- [ ] Tests cover comment creation and retrieval
+- [x] Comment input at the bottom of the task detail view
+- [x] `POST /api/tasks/:id/comments` creates a comment with author and body
+- [x] `GET /api/tasks/:id/comments` returns comments in chronological order
+- [x] Each comment displays author name and relative timestamp
+- [x] Tests cover comment creation and retrieval

@@ -8,12 +8,14 @@
   import TaskCreate from './pages/TaskCreate.svelte';
   import MapView from './pages/MapView.svelte';
   import ListView from './pages/ListView.svelte';
+  import TaskDetail from './pages/TaskDetail.svelte';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
   let farm = $state(null);
   let user = $state(null);
   let loading = $state(true);
+  let selectedTaskId = $state(null);
 
   async function loadFarm() {
     loading = true;
@@ -99,7 +101,9 @@
     {:else if page === 'create-task'}
       <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
     {:else if page === 'list'}
-      <ListView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotosettings={() => page = 'farm-settings'} ongotomap={() => page = 'map'} />
+      <ListView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotosettings={() => page = 'farm-settings'} ongotomap={() => page = 'map'} ongototaskdetail={(id) => { selectedTaskId = id; page = 'task-detail'; }} />
+    {:else if page === 'task-detail'}
+      <TaskDetail taskId={selectedTaskId} onback={() => page = 'list'} />
     {:else}
       <MapView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotolist={() => page = 'list'} ongotosettings={() => page = 'farm-settings'} />
     {/if}
