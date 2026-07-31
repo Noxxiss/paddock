@@ -233,6 +233,16 @@ describe('POST /api/accept-invite/:token', () => {
   });
 });
 
+describe('GET /accept-invite/:token (SPA routing)', () => {
+  test('serves index.html for accept-invite path', async () => {
+    const res = await request
+      .get('/accept-invite/some-test-token-12345');
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.text.includes('<div id="app">'), 'should contain SPA root div');
+  });
+});
+
 describe('GET /api/farms/:id/workers', () => {
   test('lists all workers on the farm (excluding manager)', async () => {
     const res = await request

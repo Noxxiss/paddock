@@ -22,4 +22,11 @@ app.use(tasksRouter);
 app.use(pushRouter);
 app.use(express.static(path.join(__dirname, '..', 'dist', 'client')));
 
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(path.join(__dirname, '..', 'dist', 'client', 'index.html'));
+});
+
 module.exports = app;

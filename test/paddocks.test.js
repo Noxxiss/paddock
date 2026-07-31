@@ -112,6 +112,46 @@ describe('POST /api/paddocks', () => {
 
     assert.strictEqual(res.status, 403);
   });
+
+  test('returns 400 when paddock geometry is outside farm boundary', async () => {
+    const outsideGeometry = {
+      type: 'Polygon',
+      coordinates: [[[20, 20], [21, 20], [21, 21], [20, 21], [20, 20]]],
+    };
+
+    const res = await request
+      .post('/api/paddocks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ name: 'Outside Paddock', geometry_geojson: outsideGeometry });
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error.includes('boundary'));
+  });
+
+  test('creates a paddock inside farm boundary when farm has no boundary', async () => {
+    // Register a new user with no farm boundary
+    const regRes = await request
+      .post('/api/auth/register')
+      .send({ email: 'noboundary@test.com', password: 'secret123', name: 'No Boundary' });
+    assert.strictEqual(regRes.status, 201);
+
+    const noBoundaryToken = regRes.body.token;
+    const noBoundaryFarmId = regRes.body.user.farm_id;
+
+    // The auto-created farm has no boundary_geojson
+    const geometry = {
+      type: 'Polygon',
+      coordinates: [[[50, 50], [51, 50], [51, 51], [50, 51], [50, 50]]],
+    };
+
+    const res = await request
+      .post('/api/paddocks')
+      .set('Authorization', `Bearer ${noBoundaryToken}`)
+      .send({ name: 'Anywhere Paddock', geometry_geojson: geometry });
+
+    assert.strictEqual(res.status, 201);
+    assert.strictEqual(res.body.paddock.name, 'Anywhere Paddock');
+  });
 });
 
 describe('GET /api/paddocks', () => {
@@ -209,6 +249,36 @@ describe('PATCH /api/paddocks/:id', () => {
       .send({ name: 'Worker Edit' });
 
     assert.strictEqual(res.status, 403);
+  });
+
+  test('returns 400 when updated geometry is outside farm boundary', async () => {
+    const outsideGeometry = {
+      type: 'Polygon',
+      coordinates: [[[30, 30], [31, 30], [31, 31], [30, 31], [30, 30]]],
+    };
+
+    const res = await request
+      .patch(`/api/paddocks/${paddockId}`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ geometry_geojson: outsideGeometry });
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error.includes('boundary'));
+  });
+
+  test('updates geometry when inside farm boundary', async () => {
+    const insideGeometry = {
+      type: 'Polygon',
+      coordinates: [[[1, 1], [3, 1], [3, 3], [1, 3], [1, 1]]],
+    };
+
+    const res = await request
+      .patch(`/api/paddocks/${paddockId}`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({ geometry_geojson: insideGeometry });
+
+    assert.strictEqual(res.status, 200);
+    assert.deepStrictEqual(JSON.parse(res.body.paddock.geometry_geojson), insideGeometry);
   });
 });
 

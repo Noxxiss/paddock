@@ -9,6 +9,8 @@
   let error = $state('');
   let commentBody = $state('');
   let posting = $state(false);
+  import Spinner from '../lib/Spinner.svelte';
+  import { showToast } from '../lib/toast.js';
   let postError = $state('');
 
   function getToken() {
@@ -79,6 +81,7 @@
         const data = await res.json();
         comments = [...comments, data.comment];
         commentBody = '';
+        showToast('Comment posted', 'success');
       } else {
         const data = await res.json();
         postError = data.error || 'Failed to post comment';
@@ -120,9 +123,7 @@
   </div>
 
   {#if loading}
-    <div class="loading-overlay">
-      <p>Loading...</p>
-    </div>
+    <Spinner message="Loading task..." />
   {/if}
 
   {#if error}

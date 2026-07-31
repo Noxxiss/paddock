@@ -4,6 +4,7 @@
   import 'leaflet-draw';
   import 'leaflet/dist/leaflet.css';
   import 'leaflet-draw/dist/leaflet.draw.css';
+  import { addBasemapControls } from './basemaps.js';
 
   let { paddocks: initialPaddocks = [], oncreate, onupdate, ondelete } = $props();
 
@@ -26,7 +27,7 @@
         ? JSON.parse(p.geometry_geojson)
         : p.geometry_geojson;
 
-      const layer = L.geoJSON(geometry, {
+      const geoLayer = L.geoJSON(geometry, {
         style: {
           color: getColor(p.id),
           fillColor: getColor(p.id),
@@ -35,14 +36,16 @@
         },
       });
 
-      layer._paddockId = p.id;
-      layer.bindTooltip(p.name, { permanent: true, direction: 'center', className: 'paddock-label' });
-      drawnItems.addLayer(layer);
+      geoLayer.eachLayer(layer => {
+        layer._paddockId = p.id;
+        layer.bindTooltip(p.name, { permanent: true, direction: 'center', className: 'paddock-label' });
+        drawnItems.addLayer(layer);
+      });
 
       if (!bounds) {
-        bounds = layer.getBounds();
+        bounds = geoLayer.getBounds();
       } else {
-        bounds.extend(layer.getBounds());
+        bounds.extend(geoLayer.getBounds());
       }
     }
 
@@ -75,10 +78,7 @@
       zoom: 5,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    addBasemapControls(map);
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);

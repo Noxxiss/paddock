@@ -1,4 +1,8 @@
 <script>
+  import Spinner from '../lib/Spinner.svelte';
+  import ConfirmDialog from '../lib/ConfirmDialog.svelte';
+  import { showToast } from '../lib/toast.js';
+
   let { farm, onback } = $props();
 
   let workers = $state([]);
@@ -8,6 +12,7 @@
   let inviting = $state(false);
   let lastInvite = $state(null);
   let removing = $state(null);
+  let confirmRemove = $state(null);
   let farmId = $derived(farm.id);
 
   async function loadWorkers() {
@@ -53,6 +58,7 @@
 
       lastInvite = data.invite;
       inviteEmail = '';
+      showToast('Invite link generated', 'success');
     } catch (e) {
       error = 'Network error. Is the server running?';
     } finally {
@@ -61,8 +67,7 @@
   }
 
   async function handleRemove(workerId) {
-    if (!confirm('Remove this worker from the farm?')) return;
-
+    confirmRemove = null;
     removing = workerId;
     error = '';
 
@@ -79,6 +84,7 @@
       }
 
       workers = workers.filter(w => w.id !== workerId);
+      showToast('Worker removed', 'success');
     } catch (e) {
       error = 'Network error. Is the server running?';
     } finally {
@@ -146,7 +152,7 @@
     <p class="section-desc">Current workers on the farm.</p>
 
     {#if loading}
-      <p>Loading...</p>
+      <Spinner message="Loading workers..." />
     {:else if workers.length === 0}
       <p class="empty">No workers yet.</p>
     {:else}
@@ -160,7 +166,7 @@
             </div>
             <button
               class="remove-btn"
-              onclick={() => handleRemove(worker.id)}
+              onclick={() => confirmRemove = worker.id}
               disabled={removing === worker.id}
             >
               {removing === worker.id ? 'Removing...' : 'Remove'}
@@ -171,6 +177,16 @@
     {/if}
   </div>
 </div>
+
+<ConfirmDialog
+  open={confirmRemove !== null}
+  title="Remove worker?"
+  message="Are you sure you want to remove this worker from the farm? They will lose access to all farm data."
+  confirmText="Remove"
+  danger={true}
+  onconfirm={() => handleRemove(confirmRemove)}
+  oncancel={() => confirmRemove = null}
+/>
 
 <style>
   .worker-management {

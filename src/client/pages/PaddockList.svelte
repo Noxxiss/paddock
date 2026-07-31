@@ -1,6 +1,9 @@
 <script>
   import { onMount } from 'svelte';
   import PaddockMap from '../lib/PaddockMap.svelte';
+  import Spinner from '../lib/Spinner.svelte';
+  import ConfirmDialog from '../lib/ConfirmDialog.svelte';
+  import { showToast } from '../lib/toast.js';
 
   let { onback } = $props();
 
@@ -9,6 +12,10 @@
   let error = $state('');
   let editingPaddock = $state(null);
   let editName = $state('');
+  let saving = $state(null);
+  let deleting = $state(null);
+  let confirmDelete = $state(null);
+  let savingName = $state(null);
 
   function getToken() {
     return localStorage.getItem('token');
@@ -53,6 +60,7 @@
         return;
       }
 
+      showToast('Paddock created', 'success');
       await loadPaddocks();
     } catch {
       error = 'Network error. Is the server running?';
@@ -77,6 +85,7 @@
         return;
       }
 
+      showToast('Paddock updated', 'success');
       await loadPaddocks();
     } catch {
       error = 'Network error. Is the server running?';
@@ -84,8 +93,8 @@
   }
 
   async function handleDelete(id) {
-    if (!confirm('Delete this paddock?')) return;
-
+    confirmDelete = null;
+    deleting = id;
     error = '';
     try {
       const res = await fetch(`/api/paddocks/${id}`, {
@@ -96,12 +105,16 @@
       const data = await res.json();
       if (!res.ok) {
         error = data.error || 'Failed to delete paddock';
+        showToast(error, 'error');
         return;
       }
 
+      showToast('Paddock deleted', 'success');
       await loadPaddocks();
     } catch {
       error = 'Network error. Is the server running?';
+    } finally {
+      deleting = null;
     }
   }
 
@@ -117,9 +130,11 @@
 
   async function saveEdit(paddock) {
     if (!editName.trim()) return;
+    savingName = paddock.id;
     await handleUpdate(paddock.id, { name: editName.trim() });
     editingPaddock = null;
     editName = '';
+    savingName = null;
   }
 
   onMount(loadPaddocks);
@@ -143,7 +158,7 @@
   {/if}
 
   {#if loading}
-    <p>Loading paddocks...</p>
+    <Spinner message="Loading paddocks..." />
   {:else if paddocks.length === 0}
     <p class="empty">No paddocks yet. Draw one on the map above.</p>
   {:else}
@@ -154,15 +169,20 @@
             <input
               type="text"
               bind:value={editName}
+              disabled={savingName === paddock.id}
               onkeydown={(e) => { if (e.key === 'Enter') saveEdit(paddock); if (e.key === 'Escape') cancelEdit(); }}
             />
-            <button onclick={() => saveEdit(paddock)}>Save</button>
-            <button class="secondary" onclick={cancelEdit}>Cancel</button>
+            <button onclick={() => saveEdit(paddock)} disabled={savingName === paddock.id}>
+              {savingName === paddock.id ? 'Saving...' : 'Save'}
+            </button>
+            <button class="secondary" onclick={cancelEdit} disabled={savingName === paddock.id}>Cancel</button>
           {:else}
             <span class="paddock-name">{paddock.name}</span>
             <div class="paddock-actions">
-              <button onclick={() => startEdit(paddock)}>Rename</button>
-              <button class="danger" onclick={() => handleDelete(paddock.id)}>Delete</button>
+              <button onclick={() => startEdit(paddock)} disabled={editingPaddock !== null}>Rename</button>
+              <button class="danger" onclick={() => confirmDelete = paddock.id} disabled={deleting === paddock.id}>
+                {deleting === paddock.id ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
           {/if}
         </div>
@@ -172,6 +192,16 @@
 
   <button class="back" onclick={onback}>Back to settings</button>
 </div>
+
+<ConfirmDialog
+  open={confirmDelete !== null}
+  title="Delete paddock?"
+  message="Are you sure you want to delete this paddock? This action cannot be undone."
+  confirmText="Delete"
+  danger={true}
+  onconfirm={() => handleDelete(confirmDelete)}
+  oncancel={() => confirmDelete = null}
+/>
 
 <style>
   .paddock-list {

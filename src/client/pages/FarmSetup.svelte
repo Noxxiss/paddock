@@ -5,6 +5,7 @@
 
   let farmName = $state('');
   let boundary = $state(null);
+  import { showToast } from '../lib/toast.js';
   let saving = $state(false);
   let error = $state('');
 
@@ -43,6 +44,7 @@
       }
 
       localStorage.setItem('token', data.token);
+      showToast('Farm created', 'success');
       oncreate(data.farm);
     } catch (e) {
       error = 'Network error. Is the server running?';

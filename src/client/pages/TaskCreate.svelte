@@ -4,6 +4,7 @@
   import 'leaflet-draw';
   import 'leaflet/dist/leaflet.css';
   import 'leaflet-draw/dist/leaflet.draw.css';
+  import { addBasemapControls } from '../lib/basemaps.js';
 
   let { farm, onback, oncreated } = $props();
 
@@ -16,6 +17,9 @@
   let assignedTo = $state('');
   let saving = $state(false);
   let error = $state('');
+  import Spinner from '../lib/Spinner.svelte';
+  import { showToast } from '../lib/toast.js';
+  let loading = $state(true);
   let drawnGeometry = $state(null);
   let mapContainer = $state(null);
   let map;
@@ -60,10 +64,7 @@
       zoom: 5,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    addBasemapControls(map);
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
@@ -181,6 +182,7 @@
         return;
       }
 
+      showToast('Task created', 'success');
       if (oncreated) oncreated(data.task);
     } catch {
       error = 'Network error. Is the server running?';
@@ -190,8 +192,7 @@
   }
 
   onMount(() => {
-    loadPaddocks();
-    loadWorkers();
+    Promise.all([loadPaddocks(), loadWorkers()]).then(() => { loading = false; });
     if (mapContainer && !map) {
       initMap();
     }
@@ -210,6 +211,9 @@
 
   <button class="back" onclick={onback}>&larr; Back</button>
 
+  {#if loading}
+    <Spinner message="Loading..." />
+  {:else}
   <form onsubmit={handleSubmit}>
     {#if error}
       <p class="error">{error}</p>
@@ -275,6 +279,7 @@
       {saving ? 'Creating...' : 'Create task'}
     </button>
   </form>
+  {/if}
 </div>
 
 <style>
