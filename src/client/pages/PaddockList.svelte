@@ -5,7 +5,7 @@
   import ConfirmDialog from '../lib/ConfirmDialog.svelte';
   import { showToast } from '../lib/toast.js';
 
-  let { farm = null, onback } = $props();
+  let { farm = null, onback, farmBoundary = null } = $props();
 
   let paddocks = $state([]);
   let loading = $state(true);
@@ -150,6 +150,7 @@
       oncreate={handleCreate}
       onupdate={handleUpdate}
       ondelete={handleDelete}
+      {farmBoundary}
     />
   </div>
   <p class="hint">Draw a new polygon on the map to create a paddock. Edit or delete existing paddocks using the controls.</p>
