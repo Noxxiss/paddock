@@ -2,6 +2,7 @@
   "name": "paddock",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Farm task management app",
   "main": "src/server.js",
   "scripts": {
@@ -10,7 +11,7 @@
     "dev:client": "vite",
     "build:client": "vite build",
     "test": "node --test test/*.test.js",
-    "postinstall": "patch-package",
+    "postinstall": "npx patch-package",
     "db:init": "node -e \"require('./src/db').initialize()\"",
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "patch-package": "^8.0.0",
     "supertest": "^7.0.0",
     "svelte": "^5.56.8",
     "vite": "^8.1.5"

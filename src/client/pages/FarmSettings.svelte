@@ -3,8 +3,13 @@
 
   let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers } = $props();
 
-  let farmName = $state(initialFarm.name);
-  let boundary = $state(initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null);
+  let farmName = $state('');
+  let boundary = $state(null);
+
+  $effect(() => {
+    farmName = initialFarm.name;
+    boundary = initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null;
+  });
   let saving = $state(false);
   let error = $state('');
 
