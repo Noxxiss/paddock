@@ -21,16 +21,19 @@ router.post('/api/auth/register', (req, res) => {
 
   const password_hash = bcrypt.hashSync(password, 10);
 
-  const insertFarm = db.prepare('INSERT INTO farms (name) VALUES (?)');
+  const upsertFarm = db.prepare(
+    'INSERT INTO farms (name) VALUES (?) ON CONFLICT DO NOTHING'
+  );
+  const getFarm = db.prepare('SELECT id FROM farms ORDER BY id LIMIT 1');
   const insertUser = db.prepare(
     'INSERT INTO users (farm_id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?)'
   );
 
   const result = db.transaction(() => {
-    const farmInfo = insertFarm.run('My Farm');
-    const farm_id = farmInfo.lastInsertRowid;
-    const userInfo = insertUser.run(farm_id, email, password_hash, name, 'manager');
-    return { id: userInfo.lastInsertRowid, farm_id };
+    upsertFarm.run('My Farm');
+    const farm = getFarm.get();
+    const userInfo = insertUser.run(farm.id, email, password_hash, name, 'manager');
+    return { id: userInfo.lastInsertRowid, farm_id: farm.id };
   })();
 
   const user = { id: result.id, email, role: 'manager', farm_id: result.farm_id };
@@ -42,7 +45,7 @@ router.post('/api/auth/register', (req, res) => {
   });
 });
 
-router.post('/api/auth/login', (req, res) => {
+router.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -59,9 +62,13 @@ router.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
-  const valid = bcrypt.compareSync(password, user.password_hash);
-  if (!valid) {
-    return res.status(401).json({ error: 'Invalid email or password' });
+  try {
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+  } catch {
+    return res.status(500).json({ error: 'Authentication error' });
   }
 
   const token = generateToken({ id: user.id, email: user.email, role: user.role, farm_id: user.farm_id });

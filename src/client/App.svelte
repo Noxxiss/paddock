@@ -5,12 +5,7 @@
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
 
-  function handleLogin(t) {
-    token = t;
-    localStorage.setItem('token', t);
-  }
-
-  function handleRegister(t) {
+  function handleAuth(t) {
     token = t;
     localStorage.setItem('token', t);
   }
@@ -30,9 +25,9 @@
       <button onclick={logout}>Log out</button>
     </div>
   {:else if page === 'login'}
-    <Login onlogin={(t) => handleLogin(t)} onswitch={() => page = 'register'} />
+    <Login onlogin={handleAuth} onswitch={() => page = 'register'} />
   {:else}
-    <Register onregister={(t) => handleRegister(t)} onswitch={() => page = 'login'} />
+    <Register onregister={handleAuth} onswitch={() => page = 'login'} />
   {/if}
 </main>
 
