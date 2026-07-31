@@ -5,6 +5,7 @@
   import FarmSettings from './pages/FarmSettings.svelte';
   import PaddockList from './pages/PaddockList.svelte';
   import WorkerManagement from './pages/WorkerManagement.svelte';
+  import TaskCreate from './pages/TaskCreate.svelte';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
@@ -48,6 +49,10 @@
     farm = f;
   }
 
+  function handleTaskCreated(task) {
+    page = 'default';
+  }
+
   function logout() {
     token = null;
     farm = null;
@@ -84,11 +89,13 @@
       <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}
       <PaddockList onback={() => page = 'farm-settings'} />
+    {:else if page === 'create-task'}
+      <TaskCreate {farm} onback={() => page = 'farm-settings'} oncreated={handleTaskCreated} />
     {:else}
       <div class="authenticated">
         <h1>{farm.name}</h1>
         <p>You are logged in.</p>
-        <p><em>App content coming soon.</em></p>
+        <button onclick={() => page = 'create-task'}>Create task</button>
         <button onclick={() => page = 'farm-settings'}>Farm settings</button>
         <button onclick={logout}>Log out</button>
       </div>

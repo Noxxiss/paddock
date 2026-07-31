@@ -6,6 +6,7 @@ const farmsRouter = require('./routes/farms');
 const paddocksRouter = require('./routes/paddocks');
 const invitesRouter = require('./routes/invites');
 const workersRouter = require('./routes/workers');
+const tasksRouter = require('./routes/tasks');
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(farmsRouter);
 app.use(paddocksRouter);
 app.use(invitesRouter);
 app.use(workersRouter);
+app.use(tasksRouter);
 app.use(express.static(path.join(__dirname, '..', 'dist', 'client')));
 
 module.exports = app;
