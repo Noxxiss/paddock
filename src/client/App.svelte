@@ -120,7 +120,7 @@
     {:else if page === 'workers'}
       <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}
-      <PaddockList onback={() => page = 'farm-settings'} />
+      <PaddockList onback={() => page = 'farm-settings'} farmBoundary={farm.boundary_geojson && (typeof farm.boundary_geojson === 'string' ? JSON.parse(farm.boundary_geojson) : farm.boundary_geojson)} />
     {:else if page === 'create-task'}
       <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
     {:else if page === 'list'}

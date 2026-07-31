@@ -9,7 +9,9 @@
   import { snapPoint } from './snapping-dom.js';
   import { getSnapCandidates } from './snapping.js';
 
-  let { paddocks: initialPaddocks = [], oncreate, onupdate, ondelete } = $props();
+  import { isGeometryOutsideBoundary } from './geometry.js';
+
+  let { paddocks: initialPaddocks = [], oncreate, onupdate, ondelete, farmBoundary = null } = $props();
 
   let mapContainer = $state(null);
   let map;
@@ -187,6 +189,11 @@
         }
       }
       const geometry = e.layer.toGeoJSON().geometry;
+      if (farmBoundary && isGeometryOutsideBoundary(geometry, farmBoundary)) {
+        alert('Paddock must be within the farm boundary');
+        drawnItems.removeLayer(e.layer);
+        return;
+      }
       const name = prompt('Name this paddock:');
       if (name && name.trim()) {
         drawnItems.addLayer(e.layer);
@@ -200,6 +207,11 @@
         if (id && onupdate) {
           const geometry = layerToGeometry(layer);
           if (geometry) {
+            if (farmBoundary && isGeometryOutsideBoundary(geometry, farmBoundary)) {
+              alert('Paddock must be within the farm boundary');
+              rebuild();
+              return;
+            }
             onupdate(id, { geometry_geojson: geometry });
           }
         }
