@@ -2,7 +2,6 @@
   "name": "paddock",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "Farm task management app",
   "main": "src/server.js",
   "scripts": {

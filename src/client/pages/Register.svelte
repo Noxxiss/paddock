@@ -1,5 +1,5 @@
 <script>
-  let { onregister, onswitch } = $props();
+  let { inviteToken = null, onregister, onswitch } = $props();
 
   let name = $state('');
   let email = $state('');
@@ -13,7 +13,8 @@
     loading = true;
 
     try {
-      const res = await fetch('/api/auth/register', {
+      const url = inviteToken ? `/api/accept-invite/${inviteToken}` : '/api/auth/register';
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -36,10 +37,14 @@
 </script>
 
 <form onsubmit={handleSubmit}>
-  <h1>Register</h1>
+  <h1>{inviteToken ? 'Accept Invite' : 'Register'}</h1>
 
   {#if error}
     <p class="error">{error}</p>
+  {/if}
+
+  {#if inviteToken}
+    <p class="hint">You've been invited to join a farm. Create your worker account below.</p>
   {/if}
 
   <label>
@@ -133,5 +138,11 @@
     font-size: 0.875rem;
     text-decoration: underline;
     padding: 0;
+  }
+
+  .hint {
+    color: #555;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
   }
 </style>

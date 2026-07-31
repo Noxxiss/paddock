@@ -18,6 +18,7 @@
   let user = $state(null);
   let loading = $state(true);
   let selectedTaskId = $state(null);
+  let inviteToken = $state(null);
 
   async function loadFarm() {
     loading = true;
@@ -87,6 +88,13 @@
       selectedTaskId = parseInt(taskParam);
       page = 'task-detail';
       window.history.replaceState({}, '', '/');
+      return;
+    }
+
+    const match = window.location.pathname.match(/^\/accept-invite\/([a-f0-9]+)$/);
+    if (match) {
+      inviteToken = match[1];
+      page = 'register';
     }
   });
 </script>
@@ -124,7 +132,7 @@
   {:else if page === 'login'}
     <Login onlogin={handleAuth} onswitch={() => page = 'register'} />
   {:else}
-    <Register onregister={handleAuth} onswitch={() => page = 'login'} />
+    <Register {inviteToken} onregister={handleAuth} onswitch={() => page = 'login'} />
   {/if}
 </main>
 
