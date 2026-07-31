@@ -191,11 +191,14 @@
     }
   }
 
-  onMount(() => {
-    Promise.all([loadPaddocks(), loadWorkers()]).then(() => { loading = false; });
+  $effect(() => {
     if (mapContainer && !map) {
       initMap();
     }
+  });
+
+  onMount(() => {
+    Promise.all([loadPaddocks(), loadWorkers()]).then(() => { loading = false; });
   });
 
   onDestroy(() => {
