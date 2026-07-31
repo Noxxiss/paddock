@@ -10,7 +10,8 @@
     "dev:client": "vite",
     "build:client": "vite build",
     "test": "node --test test/*.test.js",
-    "db:init": "node -e \"require('./src/db').initialize()\""
+    "db:init": "node -e \"require('./src/db').initialize()\"",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -19,7 +20,8 @@
     "jsonwebtoken": "^9.0.3",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
