@@ -1,7 +1,3 @@
-import L from 'leaflet';
-
-const SNAP_PX_TOLERANCE = 12;
-
 function sqr(x) { return x * x; }
 
 function distanceSquared(a, b) {
@@ -46,44 +42,6 @@ function getSnapCandidates(paddocks) {
   return { vertices, edges };
 }
 
-function latLngToContainerPoint(map, latlng) {
-  return map.latLngToContainerPoint(L.latLng(latlng.lat, latlng.lng));
-}
-
-function containerPointToLatLng(map, point) {
-  const ll = map.containerPointToLatLng(point);
-  return { lat: ll.lat, lng: ll.lng };
-}
-
-function snapPoint(map, latlng, candidates, tolerancePx) {
-  tolerancePx = tolerancePx || SNAP_PX_TOLERANCE;
-  const point = latLngToContainerPoint(map, latlng);
-  let bestDist = Infinity;
-  let bestLatLng = null;
-
-  for (const v of candidates.vertices) {
-    const vp = latLngToContainerPoint(map, v);
-    const d = point.distanceTo(vp);
-    if (d < bestDist && d <= tolerancePx) {
-      bestDist = d;
-      bestLatLng = v;
-    }
-  }
-
-  for (const e of candidates.edges) {
-    const ea = latLngToContainerPoint(map, e.a);
-    const eb = latLngToContainerPoint(map, e.b);
-    const d = pointToSegmentDistance(point, ea, eb);
-    if (d < bestDist && d <= tolerancePx) {
-      bestDist = d;
-      const { point: closest } = closestPointOnSegmentScreen(point, ea, eb);
-      bestLatLng = containerPointToLatLng(map, closest);
-    }
-  }
-
-  return bestLatLng;
-}
-
 function pointToSegmentDistance(p, a, b) {
   const abx = b.x - a.x;
   const aby = b.y - a.y;
@@ -114,12 +72,10 @@ function closestPointOnSegmentScreen(p, a, b) {
 }
 
 export {
-  snapPoint,
-  getSnapCandidates,
-  SNAP_PX_TOLERANCE,
   distanceSquared,
   closestPointOnSegment,
   distanceToSegmentSquared,
+  getSnapCandidates,
   pointToSegmentDistance,
   closestPointOnSegmentScreen,
 };

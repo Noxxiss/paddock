@@ -6,7 +6,8 @@
   import 'leaflet-draw/dist/leaflet.draw.css';
   import { addBasemapControls } from './basemaps.js';
   import SnapToggle from './SnapToggle.js';
-  import { snapPoint, getSnapCandidates } from './snapping.js';
+  import { snapPoint } from './snapping-dom.js';
+  import { getSnapCandidates } from './snapping.js';
 
   let { paddocks: initialPaddocks = [], oncreate, onupdate, ondelete } = $props();
 
