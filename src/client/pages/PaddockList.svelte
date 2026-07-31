@@ -5,7 +5,7 @@
   import ConfirmDialog from '../lib/ConfirmDialog.svelte';
   import { showToast } from '../lib/toast.js';
 
-  let { onback } = $props();
+  let { farm = null, onback } = $props();
 
   let paddocks = $state([]);
   let loading = $state(true);
@@ -146,6 +146,7 @@
   <div class="map-wrapper">
     <PaddockMap
       paddocks={paddocks}
+      farmBoundary={farm?.boundary_geojson}
       oncreate={handleCreate}
       onupdate={handleUpdate}
       ondelete={handleDelete}
