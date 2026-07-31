@@ -3,8 +3,14 @@
 
   let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers } = $props();
 
-  let farmName = $state(initialFarm.name);
-  let boundary = $state(initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null);
+  let farmName = $state('');
+  let boundary = $state(null);
+
+  $effect(() => {
+    farmName = initialFarm.name;
+    boundary = initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null;
+  });
+  import { showToast } from '../lib/toast.js';
   let saving = $state(false);
   let error = $state('');
 
@@ -42,6 +48,7 @@
         return;
       }
 
+      showToast('Farm settings saved', 'success');
       onupdate(data.farm);
     } catch (e) {
       error = 'Network error. Is the server running?';

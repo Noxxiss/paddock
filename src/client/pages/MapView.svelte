@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
+  import { addBasemapControls } from '../lib/basemaps.js';
 
   let { farm, user, onlogout, ongotocreatetask, ongotosettings, ongotolist } = $props();
 
@@ -14,6 +15,7 @@
   let declutterActive = $state(false);
   let inViewCount = $state(0);
   let shownCount = $state(0);
+  import { showToast } from '../lib/toast.js';
   let completing = $state(null);
   let completeError = $state('');
 
@@ -54,6 +56,7 @@
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       if (res.ok) {
+        showToast('Task marked as complete', 'success');
         map.closePopup();
       } else {
         const data = await res.json();
@@ -195,10 +198,7 @@
       attributionControl: true,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    addBasemapControls(map);
 
     taskLayerGroup = L.featureGroup();
     map.addLayer(taskLayerGroup);
@@ -234,7 +234,11 @@
         if (btn) {
           btn.onclick = () => {
             const taskId = Number(btn.dataset.taskId);
-            if (taskId) markComplete(taskId);
+            if (taskId && !completing) {
+              btn.disabled = true;
+              btn.textContent = 'Completing...';
+              markComplete(taskId);
+            }
           };
         }
       }, 0);

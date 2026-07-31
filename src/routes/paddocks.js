@@ -2,6 +2,36 @@ const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../db');
 
+function pointInPolygon(px, py, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+    if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function isGeometryOutsideBoundary(geometry, boundary) {
+  if (!boundary) return false;
+
+  let coords;
+  if (geometry.type === 'Polygon') {
+    coords = geometry.coordinates[0];
+  } else if (geometry.type === 'MultiPolygon') {
+    coords = geometry.coordinates.flatMap(p => p[0]);
+  } else {
+    return true;
+  }
+
+  if (!Array.isArray(coords) || coords.length < 3) return true;
+
+  const boundaryRing = boundary.coordinates[0];
+  return !coords.every(([lng, lat]) => pointInPolygon(lng, lat, boundaryRing));
+}
+
 const router = express.Router();
 
 router.get('/api/paddocks', authMiddleware, (req, res) => {
@@ -29,6 +59,11 @@ router.post('/api/paddocks', authMiddleware, (req, res) => {
   }
 
   const db = getDb();
+
+  const farm = db.prepare('SELECT boundary_geojson FROM farms WHERE id = ?').get(req.user.farm_id);
+  if (farm && farm.boundary_geojson && isGeometryOutsideBoundary(geometry_geojson, JSON.parse(farm.boundary_geojson))) {
+    return res.status(400).json({ error: 'Paddock geometry must be within the farm boundary' });
+  }
 
   const result = db.prepare(
     'INSERT INTO paddocks (farm_id, name, geometry_geojson) VALUES (?, ?, ?)'
@@ -88,6 +123,10 @@ router.patch('/api/paddocks/:id', authMiddleware, (req, res) => {
   }
 
   if (geometry_geojson !== undefined) {
+    const farm = db.prepare('SELECT boundary_geojson FROM farms WHERE id = ?').get(req.user.farm_id);
+    if (farm && farm.boundary_geojson && isGeometryOutsideBoundary(geometry_geojson, JSON.parse(farm.boundary_geojson))) {
+      return res.status(400).json({ error: 'Paddock geometry must be within the farm boundary' });
+    }
     updates.push('geometry_geojson = ?');
     values.push(JSON.stringify(geometry_geojson));
   }

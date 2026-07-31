@@ -10,6 +10,7 @@
   let completing = $state(null);
   let completeError = $state('');
   let pollInterval;
+  import { showToast } from '../lib/toast.js';
   let dragIndex = $state(null);
   let dragOverIndex = $state(null);
 
@@ -28,6 +29,8 @@
       if (!res.ok) {
         const data = await res.json();
         completeError = data.error || 'Failed to complete task';
+      } else {
+        showToast('Task marked as complete', 'success');
       }
       await loadTasks();
     } catch {
@@ -72,6 +75,8 @@
         const data = await res.json();
         error = data.error || 'Failed to reorder tasks';
         await loadTasks();
+      } else {
+        showToast('Tasks reordered', 'success');
       }
     } catch {
       error = 'Network error. Is the server running?';

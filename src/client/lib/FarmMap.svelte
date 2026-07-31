@@ -4,6 +4,7 @@
   import 'leaflet-draw';
   import 'leaflet/dist/leaflet.css';
   import 'leaflet-draw/dist/leaflet.draw.css';
+  import { addBasemapControls } from './basemaps.js';
 
   let { initialBoundary = null, onboundarychange } = $props();
 
@@ -17,18 +18,17 @@
       zoom: 5,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    addBasemapControls(map);
 
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
     if (initialBoundary) {
-      const layer = L.geoJSON(initialBoundary);
-      drawnItems.addLayer(layer);
-      map.fitBounds(layer.getBounds(), { padding: [20, 20] });
+      const geoLayer = L.geoJSON(initialBoundary);
+      geoLayer.eachLayer(layer => {
+        drawnItems.addLayer(layer);
+      });
+      map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
     }
 
     const drawControl = new L.Control.Draw({
