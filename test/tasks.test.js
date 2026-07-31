@@ -171,6 +171,30 @@ describe('POST /api/tasks', () => {
     assert.strictEqual(res.body.task.assigned_to, managerUser.id);
   });
 
+  test('creates a task with assigned worker and reflects assigned_to_name in GET', async () => {
+    const createRes = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        title: 'Named assigned task',
+        priority: 'high',
+        location_type: 'drawing',
+        location_geojson: { type: 'Point', coordinates: [6, 6] },
+        assigned_to: managerUser.id,
+      });
+
+    assert.strictEqual(createRes.status, 201);
+
+    const getRes = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(getRes.status, 200);
+    const assigned = getRes.body.tasks.find(t => t.title === 'Named assigned task');
+    assert.ok(assigned);
+    assert.strictEqual(assigned.assigned_to_name, 'Task Manager');
+  });
+
   test('worker can create a task', async () => {
     const res = await request
       .post('/api/tasks')
@@ -286,6 +310,8 @@ describe('GET /api/tasks', () => {
     assert.ok(task.created_by);
     assert.ok(task.created_at);
     assert.ok(task.order >= 0);
+    // assigned_to_name should be null for unassigned tasks
+    assert.strictEqual(task.assigned_to_name, null);
   });
 
   test('tasks include paddock details when location_type is paddock', async () => {
@@ -341,5 +367,75 @@ describe('GET /api/tasks', () => {
 
     const titles = res.body.tasks.map(t => t.title);
     assert.ok(!titles.includes('Will be done'));
+  });
+});
+
+describe('Map view data', () => {
+  test('tasks data includes all fields needed for map rendering', async () => {
+    const res = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.body.tasks.length > 0);
+
+    for (const task of res.body.tasks) {
+      assert.ok(task.id);
+      assert.ok(task.title);
+      assert.ok(task.priority);
+      assert.strictEqual(task.status, 'todo');
+      assert.ok(task.location_type);
+      assert.ok(task.created_at);
+
+      // Each task must have a location representation for the map
+      if (task.location_type === 'drawing') {
+        assert.ok(task.location_geojson);
+        const geo = JSON.parse(task.location_geojson);
+        assert.ok(geo.type);
+        assert.ok(geo.coordinates);
+      }
+
+      if (task.location_type === 'paddock') {
+        assert.ok(task.paddock_id);
+        assert.ok(task.paddock_name);
+        assert.ok(task.paddock_geometry_geojson);
+        const padGeo = JSON.parse(task.paddock_geometry_geojson);
+        assert.ok(padGeo.type);
+        assert.ok(padGeo.coordinates);
+      }
+    }
+  });
+
+  test('tasks with different geometry types are returned for map display', async () => {
+    const geometries = [
+      { type: 'Point', coordinates: [148.5, -20.5] },
+      { type: 'Polygon', coordinates: [[[148.0, -20.0], [149.0, -20.0], [149.0, -21.0], [148.0, -21.0], [148.0, -20.0]]] },
+      { type: 'LineString', coordinates: [[148.1, -20.1], [148.2, -20.2], [148.3, -20.1]] },
+    ];
+
+    for (const geo of geometries) {
+      const res = await request
+        .post('/api/tasks')
+        .set('Authorization', `Bearer ${managerToken}`)
+        .send({
+          title: `Map geo ${geo.type}`,
+          location_type: 'drawing',
+          location_geojson: geo,
+        });
+      assert.strictEqual(res.status, 201);
+    }
+
+    const getRes = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(getRes.status, 200);
+    for (const geo of geometries) {
+      const task = getRes.body.tasks.find(t => t.title === `Map geo ${geo.type}`);
+      assert.ok(task, `Task for ${geo.type} should exist`);
+      assert.ok(task.location_geojson);
+      const parsed = JSON.parse(task.location_geojson);
+      assert.strictEqual(parsed.type, geo.type);
+    }
   });
 });

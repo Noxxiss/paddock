@@ -108,9 +108,11 @@ router.get('/api/tasks', authMiddleware, (req, res) => {
       t.created_at,
       t.updated_at,
       p.name AS paddock_name,
-      p.geometry_geojson AS paddock_geometry_geojson
+      p.geometry_geojson AS paddock_geometry_geojson,
+      u.name AS assigned_to_name
     FROM tasks t
     LEFT JOIN paddocks p ON p.id = t.paddock_id
+    LEFT JOIN users u ON u.id = t.assigned_to
     WHERE t.farm_id = ? AND t.status = 'todo'
     ORDER BY t."order"
   `).all(req.user.farm_id);

@@ -6,10 +6,12 @@
   import PaddockList from './pages/PaddockList.svelte';
   import WorkerManagement from './pages/WorkerManagement.svelte';
   import TaskCreate from './pages/TaskCreate.svelte';
+  import MapView from './pages/MapView.svelte';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
   let farm = $state(null);
+  let user = $state(null);
   let loading = $state(true);
 
   async function loadFarm() {
@@ -21,14 +23,17 @@
       if (res.ok) {
         const data = await res.json();
         farm = data.farm;
+        user = data.user;
         if (!data.farm.boundary_geojson) {
           page = 'farm-setup';
         }
       } else {
         farm = null;
+        user = null;
       }
     } catch {
       farm = null;
+      user = null;
     } finally {
       loading = false;
     }
@@ -49,13 +54,14 @@
     farm = f;
   }
 
-  function handleTaskCreated(task) {
-    page = 'default';
+  function handleTaskCreated() {
+    page = 'map';
   }
 
   function logout() {
     token = null;
     farm = null;
+    user = null;
     localStorage.removeItem('token');
   }
 
@@ -90,15 +96,9 @@
     {:else if page === 'paddocks'}
       <PaddockList onback={() => page = 'farm-settings'} />
     {:else if page === 'create-task'}
-      <TaskCreate {farm} onback={() => page = 'farm-settings'} oncreated={handleTaskCreated} />
+      <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
     {:else}
-      <div class="authenticated">
-        <h1>{farm.name}</h1>
-        <p>You are logged in.</p>
-        <button onclick={() => page = 'create-task'}>Create task</button>
-        <button onclick={() => page = 'farm-settings'}>Farm settings</button>
-        <button onclick={logout}>Log out</button>
-      </div>
+      <MapView {farm} {user} onlogout={logout} ongotocreatetask={() => page = 'create-task'} ongotosettings={() => page = 'farm-settings'} />
     {/if}
   {:else if page === 'login'}
     <Login onlogin={handleAuth} onswitch={() => page = 'register'} />
@@ -111,17 +111,14 @@
   :global(body) {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
-    padding: 16px;
+    padding: 0;
     background: #f5f5f5;
   }
 
   main {
-    max-width: 400px;
-    margin: 40px auto;
-  }
-
-  .authenticated {
-    text-align: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   button {

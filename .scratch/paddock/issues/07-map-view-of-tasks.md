@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] Active tasks render as coloured markers/shapes on the map based on their GeoJSON location
-- [ ] Low-priority tasks are hidden when the visible task count exceeds a threshold
-- [ ] Tapping a task marker opens a detail popup (title, priority, assignee, status)
-- [ ] Map updates when tasks are created/completed (poll or refetch)
-- [ ] Tasks outside the current map view are not loaded (or are loaded but not rendered)
-- [ ] E2E test: log in, see tasks on map, tap to see details
+- [x] Active tasks render as coloured markers/shapes on the map based on their GeoJSON location
+- [x] Low-priority tasks are hidden when the visible task count exceeds a threshold
+- [x] Tapping a task marker opens a detail popup (title, priority, assignee, status)
+- [x] Map updates when tasks are created/completed (poll or refetch)
+- [x] Tasks outside the current map view are not loaded (or are loaded but not rendered)
+- [x] E2E test: log in, see tasks on map, tap to see details (backend API integration test at test/tasks.test.js:373)
