@@ -7,6 +7,7 @@ const paddocksRouter = require('./routes/paddocks');
 const invitesRouter = require('./routes/invites');
 const workersRouter = require('./routes/workers');
 const tasksRouter = require('./routes/tasks');
+const pushRouter = require('./routes/push');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(paddocksRouter);
 app.use(invitesRouter);
 app.use(workersRouter);
 app.use(tasksRouter);
+app.use(pushRouter);
 app.use(express.static(path.join(__dirname, '..', 'dist', 'client')));
 
 module.exports = app;

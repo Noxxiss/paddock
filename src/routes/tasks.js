@@ -1,13 +1,14 @@
 const express = require('express');
 const { authMiddleware } = require('../middleware/auth');
 const { getDb } = require('../db');
+const { sendToUser, sendToFarm } = require('../push');
 
 const router = express.Router();
 
 const VALID_PRIORITIES = ['high', 'medium', 'low'];
 const VALID_LOCATION_TYPES = ['drawing', 'paddock'];
 
-router.post('/api/tasks', authMiddleware, (req, res) => {
+router.post('/api/tasks', authMiddleware, async (req, res) => {
   const { title, priority, location_type, location_geojson, paddock_id, assigned_to } = req.body;
 
   if (!title || !title.trim()) {
@@ -83,6 +84,25 @@ router.post('/api/tasks', authMiddleware, (req, res) => {
     SELECT id, farm_id, title, status, priority, "order", location_geojson, location_type, paddock_id, assigned_to, created_by, completed_by, completed_at, created_at, updated_at
     FROM tasks WHERE id = ?
   `).get(result.lastInsertRowid);
+
+  const notificationPayload = {
+    type: 'task.created',
+    task: {
+      id: task.id,
+      title: task.title,
+      priority: task.priority,
+    },
+  };
+
+  if (assigned_to) {
+    await sendToUser(assigned_to, {
+      ...notificationPayload,
+      type: 'task.assigned',
+      assignedBy: req.user.id,
+    });
+  } else {
+    await sendToFarm(req.user.farm_id, notificationPayload, req.user.id);
+  }
 
   res.status(201).json({ task });
 });

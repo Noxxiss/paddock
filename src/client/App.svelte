@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import Login from './pages/Login.svelte';
   import Register from './pages/Register.svelte';
   import FarmSetup from './pages/FarmSetup.svelte';
@@ -9,6 +10,7 @@
   import MapView from './pages/MapView.svelte';
   import ListView from './pages/ListView.svelte';
   import TaskDetail from './pages/TaskDetail.svelte';
+  import { subscribeToPush, unsubscribeFromPush } from './lib/push.js';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
@@ -46,6 +48,7 @@
     token = t;
     localStorage.setItem('token', t);
     loadFarm();
+    subscribeToPush(t);
   }
 
   function handleCreate(f) {
@@ -62,6 +65,7 @@
   }
 
   function logout() {
+    unsubscribeFromPush(token);
     token = null;
     farm = null;
     user = null;
@@ -73,6 +77,16 @@
       loadFarm();
     } else {
       loading = false;
+    }
+  });
+
+  onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    const taskParam = params.get('task');
+    if (taskParam) {
+      selectedTaskId = parseInt(taskParam);
+      page = 'task-detail';
+      window.history.replaceState({}, '', '/');
     }
   });
 </script>
