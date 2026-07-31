@@ -1,7 +1,7 @@
 <script>
   import FarmMap from '../lib/FarmMap.svelte';
 
-  let { farm: initialFarm, onupdate } = $props();
+  let { farm: initialFarm, onupdate, onmanagepaddocks } = $props();
 
   let farmName = $state(initialFarm.name);
   let boundary = $state(initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null);
@@ -73,6 +73,12 @@
       {saving ? 'Saving...' : 'Save changes'}
     </button>
   </form>
+
+  <div class="section">
+    <h2>Paddocks</h2>
+    <p class="section-desc">Manage named sub-areas within the farm.</p>
+    <button onclick={onmanagepaddocks}>Manage paddocks</button>
+  </div>
 </div>
 
 <style>
@@ -140,5 +146,34 @@
     color: #d32f2f;
     font-size: 0.875rem;
     margin-bottom: 12px;
+  }
+
+  .section {
+    margin-top: 24px;
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .section h2 {
+    margin: 0 0 4px;
+    font-size: 1.2rem;
+  }
+
+  .section-desc {
+    margin: 0 0 12px;
+    font-size: 0.85rem;
+    color: #777;
+  }
+
+  .section button {
+    padding: 8px 16px;
+    background: #4a90d9;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    cursor: pointer;
   }
 </style>
