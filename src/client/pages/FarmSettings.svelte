@@ -13,6 +13,7 @@
   import { showToast } from '../lib/toast.js';
   let saving = $state(false);
   let error = $state('');
+  let boundaryOpen = $state(true);
 
   function handleBoundaryChange(geometry) {
     boundary = geometry;
@@ -56,30 +57,20 @@
       saving = false;
     }
   }
+
+  function toggleBoundary() {
+    boundaryOpen = !boundaryOpen;
+  }
 </script>
 
 <div class="farm-settings">
   <h1>Farm settings</h1>
 
-  <form onsubmit={handleSubmit}>
-    {#if error}
-      <p class="error">{error}</p>
-    {/if}
-
-    <label>
-      Farm name
-      <input type="text" bind:value={farmName} required />
-    </label>
-
-    <div class="map-wrapper">
-      <FarmMap initialBoundary={boundary} onboundarychange={handleBoundaryChange} />
-    </div>
-    <p class="hint">Edit the farm boundary using the polygon tool.</p>
-
-    <button type="submit" disabled={saving}>
-      {saving ? 'Saving...' : 'Save changes'}
-    </button>
-  </form>
+  <div class="section">
+    <h2>Workers</h2>
+    <p class="section-desc">Invite workers and manage the team.</p>
+    <button onclick={onmanageworkers}>Manage workers</button>
+  </div>
 
   <div class="section">
     <h2>Paddocks</h2>
@@ -87,10 +78,34 @@
     <button onclick={onmanagepaddocks}>Manage paddocks</button>
   </div>
 
-  <div class="section">
-    <h2>Workers</h2>
-    <p class="section-desc">Invite workers and manage the team.</p>
-    <button onclick={onmanageworkers}>Manage workers</button>
+  <div class="section collapsible">
+    <button class="collapse-header" onclick={toggleBoundary}>
+      <span>Farm boundary</span>
+      <span class="collapse-icon">{boundaryOpen ? '▾' : '▸'}</span>
+    </button>
+    {#if boundaryOpen}
+      <div class="collapse-body">
+        <form onsubmit={handleSubmit}>
+          {#if error}
+            <p class="error">{error}</p>
+          {/if}
+
+          <label>
+            Farm name
+            <input type="text" bind:value={farmName} required />
+          </label>
+
+          <div class="map-wrapper">
+            <FarmMap initialBoundary={boundary} onboundarychange={handleBoundaryChange} />
+          </div>
+          <p class="hint">Edit the farm boundary using the polygon tool.</p>
+
+          <button type="submit" disabled={saving}>
+            {saving ? 'Saving...' : 'Save changes'}
+          </button>
+        </form>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -106,10 +121,7 @@
   }
 
   form {
-    background: white;
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 24px 0 0;
   }
 
   label {
@@ -180,7 +192,7 @@
     color: #777;
   }
 
-  .section button {
+  .section > button {
     padding: 8px 16px;
     background: #4a90d9;
     color: white;
@@ -188,5 +200,33 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+  }
+
+  .collapsible {
+    padding: 0;
+  }
+
+  .collapse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 24px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: inherit;
+    border-radius: 8px;
+  }
+
+  .collapse-icon {
+    font-size: 1rem;
+    transition: transform 0.2s;
+  }
+
+  .collapse-body {
+    padding: 0 24px 24px;
   }
 </style>
