@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet-draw';
   import 'leaflet/dist/leaflet.css';
@@ -12,6 +12,24 @@
   let map;
   let drawnItems;
 
+  function renderBoundary() {
+    if (!drawnItems) return;
+    drawnItems.clearLayers();
+    if (initialBoundary) {
+      const geoLayer = L.geoJSON(initialBoundary);
+      geoLayer.eachLayer(layer => {
+        drawnItems.addLayer(layer);
+      });
+      map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
+    }
+  }
+
+  $effect(() => {
+    if (initialBoundary && map) {
+      renderBoundary();
+    }
+  });
+
   function initMap() {
     map = L.map(mapContainer, {
       center: [-25.0, 135.0],
@@ -23,13 +41,7 @@
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
-    if (initialBoundary) {
-      const geoLayer = L.geoJSON(initialBoundary);
-      geoLayer.eachLayer(layer => {
-        drawnItems.addLayer(layer);
-      });
-      map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
-    }
+    renderBoundary();
 
     const drawControl = new L.Control.Draw({
       edit: { featureGroup: drawnItems },
@@ -65,6 +77,13 @@
   onMount(() => {
     if (mapContainer && !map) {
       initMap();
+    }
+  });
+
+  onDestroy(() => {
+    if (map) {
+      try { map.remove(); } catch {}
+      map = null;
     }
   });
 </script>
