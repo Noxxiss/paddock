@@ -1,5 +1,6 @@
 <script>
   import FarmMap from '../lib/FarmMap.svelte';
+  import { showToast } from '../lib/toast.js';
 
   let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers, onback } = $props();
 
@@ -10,7 +11,6 @@
     farmName = initialFarm.name;
     boundary = initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null;
   });
-  import { showToast } from '../lib/toast.js';
   let saving = $state(false);
   let error = $state('');
   let boundaryOpen = $state(true);

@@ -94,6 +94,8 @@
 
     const match = window.location.pathname.match(/^\/accept-invite\/([a-f0-9]+)$/);
     if (match) {
+      localStorage.removeItem('token');
+      token = null;
       inviteToken = match[1];
       page = 'register';
     }
