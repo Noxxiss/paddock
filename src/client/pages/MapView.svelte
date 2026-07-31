@@ -9,7 +9,10 @@
   let mapContainer = $state(null);
   let map;
   let taskLayerGroup;
+  let paddockLayerGroup;
   let tasks = $state([]);
+  let paddocks = $state([]);
+  let paddocksLoading = $state(true);
   let loading = $state(true);
   let pollInterval;
   let declutterActive = $state(false);
@@ -26,8 +29,27 @@
     low: '#95a5a6',
   };
 
+  function getColor(id) {
+    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
+    return colors[id % colors.length];
+  }
+
   function getToken() {
     return localStorage.getItem('token');
+  }
+
+  async function loadPaddocks() {
+    try {
+      const res = await fetch('/api/paddocks', {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok) {
+        paddocks = (await res.json()).paddocks;
+      }
+    } catch {
+    } finally {
+      paddocksLoading = false;
+    }
   }
 
   async function loadTasks() {
@@ -120,6 +142,26 @@
     return null;
   }
 
+  function renderPaddocks() {
+    if (!map || !paddockLayerGroup) return;
+    paddockLayerGroup.clearLayers();
+    for (const p of paddocks) {
+      const geometry = typeof p.geometry_geojson === 'string'
+        ? JSON.parse(p.geometry_geojson)
+        : p.geometry_geojson;
+      const color = getColor(p.id);
+      const geoLayer = L.geoJSON(geometry, {
+        style: {
+          color,
+          fillColor: color,
+          fillOpacity: 0.15,
+          weight: 2,
+        },
+      });
+      paddockLayerGroup.addLayer(geoLayer);
+    }
+  }
+
   function renderTasks() {
     if (!map || !taskLayerGroup) return;
     taskLayerGroup.clearLayers();
@@ -200,6 +242,9 @@
 
     addBasemapControls(map);
 
+    paddockLayerGroup = L.featureGroup();
+    map.addLayer(paddockLayerGroup);
+
     taskLayerGroup = L.featureGroup();
     map.addLayer(taskLayerGroup);
 
@@ -222,6 +267,7 @@
       } catch {}
     }
 
+    renderPaddocks();
     renderTasks();
 
     map.on('moveend', () => {
@@ -246,6 +292,12 @@
   }
 
   $effect(() => {
+    if (paddocks && map) {
+      renderPaddocks();
+    }
+  });
+
+  $effect(() => {
     if (tasks && map) {
       renderTasks();
     }
@@ -255,10 +307,16 @@
     if (mapContainer && !map) {
       initMap();
     }
+    loadPaddocks().then(() => {
+      if (map) renderPaddocks();
+    });
     loadTasks().then(() => {
       if (map) renderTasks();
     });
     pollInterval = setInterval(() => {
+      loadPaddocks().then(() => {
+        if (map) renderPaddocks();
+      });
       loadTasks().then(() => {
         if (map) renderTasks();
       });
