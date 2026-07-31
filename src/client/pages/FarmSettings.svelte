@@ -1,7 +1,7 @@
 <script>
   import FarmMap from '../lib/FarmMap.svelte';
 
-  let { farm: initialFarm, onupdate, onmanagepaddocks } = $props();
+  let { farm: initialFarm, onupdate, onmanagepaddocks, onmanageworkers } = $props();
 
   let farmName = $state(initialFarm.name);
   let boundary = $state(initialFarm.boundary_geojson ? JSON.parse(initialFarm.boundary_geojson) : null);
@@ -78,6 +78,12 @@
     <h2>Paddocks</h2>
     <p class="section-desc">Manage named sub-areas within the farm.</p>
     <button onclick={onmanagepaddocks}>Manage paddocks</button>
+  </div>
+
+  <div class="section">
+    <h2>Workers</h2>
+    <p class="section-desc">Invite workers and manage the team.</p>
+    <button onclick={onmanageworkers}>Manage workers</button>
   </div>
 </div>
 

@@ -4,6 +4,7 @@
   import FarmSetup from './pages/FarmSetup.svelte';
   import FarmSettings from './pages/FarmSettings.svelte';
   import PaddockList from './pages/PaddockList.svelte';
+  import WorkerManagement from './pages/WorkerManagement.svelte';
 
   let { page = 'login' } = $props();
   let token = $state(localStorage.getItem('token'));
@@ -78,7 +79,9 @@
     {:else if page === 'farm-setup'}
       <FarmSetup oncreate={handleCreate} />
     {:else if page === 'farm-settings'}
-      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} />
+      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} onmanageworkers={() => page = 'workers'} />
+    {:else if page === 'workers'}
+      <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}
       <PaddockList onback={() => page = 'farm-settings'} />
     {:else}
