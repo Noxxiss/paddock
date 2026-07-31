@@ -7,12 +7,35 @@
   let loading = $state(true);
   let error = $state('');
   let saving = $state(false);
+  let completing = $state(null);
+  let completeError = $state('');
   let pollInterval;
   let dragIndex = $state(null);
   let dragOverIndex = $state(null);
 
   function getToken() {
     return localStorage.getItem('token');
+  }
+
+  async function markComplete(taskId) {
+    completing = taskId;
+    completeError = '';
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        completeError = data.error || 'Failed to complete task';
+      }
+      await loadTasks();
+    } catch {
+      completeError = 'Network error';
+      await loadTasks();
+    } finally {
+      completing = null;
+    }
   }
 
   async function loadTasks() {
@@ -136,15 +159,23 @@
     <div class="loading-overlay">
       <p>Loading tasks...</p>
     </div>
-  {:else if error}
+  {/if}
+
+  {#if error}
     <div class="error-bar">{error}</div>
-  {:else if tasks.length === 0}
-    <div class="empty-state">
-      <p>No active tasks.</p>
-      <button class="header-btn" onclick={ongotocreatetask}>Create the first task</button>
-    </div>
-  {:else}
-    <div class="list-container">
+  {/if}
+  {#if completeError}
+    <div class="error-bar">{completeError}</div>
+  {/if}
+
+  {#if !loading}
+    {#if tasks.length === 0}
+      <div class="empty-state">
+        <p>No active tasks.</p>
+        <button class="header-btn" onclick={ongotocreatetask}>Create the first task</button>
+      </div>
+    {:else}
+      <div class="list-container">
       {#each tasks as task, i (task.id)}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
@@ -173,9 +204,17 @@
               {/if}
             </div>
           </div>
+          <button
+            class="complete-btn"
+            disabled={completing === task.id}
+            onclick={() => markComplete(task.id)}
+          >
+            {completing === task.id ? '...' : 'Done'}
+          </button>
         </div>
       {/each}
     </div>
+  {/if}
   {/if}
 </div>
 
@@ -404,5 +443,26 @@
     color: #2980b9;
     padding: 1px 5px;
     border-radius: 3px;
+  }
+
+  .complete-btn {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+
+  .complete-btn:hover {
+    background: #219a52;
+  }
+
+  .complete-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 </style>

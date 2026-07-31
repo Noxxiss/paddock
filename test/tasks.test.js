@@ -488,6 +488,154 @@ describe('PATCH /api/tasks/reorder', () => {
   });
 });
 
+describe('Task completion and audit trail', () => {
+  let taskId;
+
+  test('setup: create a task to complete', async () => {
+    const res = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        title: 'Complete me',
+        location_type: 'drawing',
+        location_geojson: { type: 'Point', coordinates: [10, 10] },
+      });
+
+    assert.strictEqual(res.status, 201);
+    taskId = res.body.task.id;
+  });
+
+  test('PATCH /api/tasks/:id/complete marks task as done', async () => {
+    const res = await request
+      .patch(`/api/tasks/${taskId}/complete`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.task.status, 'done');
+    assert.strictEqual(res.body.task.completed_by, managerUser.id);
+    assert.ok(res.body.task.completed_at);
+  });
+
+  test('completed task is excluded from GET /api/tasks (active)', async () => {
+    const res = await request
+      .get('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    const titles = res.body.tasks.map(t => t.title);
+    assert.ok(!titles.includes('Complete me'));
+  });
+
+  test('GET /api/tasks/:id returns completed task with completion data', async () => {
+    const res = await request
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.task.status, 'done');
+    assert.strictEqual(res.body.task.completed_by, managerUser.id);
+    assert.ok(res.body.task.completed_at);
+  });
+
+  test('GET /api/tasks/:id includes completed_by_name', async () => {
+    const res = await request
+      .get(`/api/tasks/${taskId}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.task.completed_by_name, 'Task Manager');
+  });
+
+  test('PATCH /api/tasks/:id/complete returns 400 if already completed', async () => {
+    const res = await request
+      .patch(`/api/tasks/${taskId}/complete`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 400);
+    assert.ok(res.body.error.includes('already completed'));
+  });
+
+  test('PATCH /api/tasks/:id/complete returns 404 for non-existent task', async () => {
+    const res = await request
+      .patch('/api/tasks/99999/complete')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('PATCH /api/tasks/:id/complete returns 404 for task on other farm', async () => {
+    const otherToken = generateToken({
+      id: 99990, email: 'other@test.com', role: 'worker', farm_id: 99999,
+    });
+
+    const res = await request
+      .patch(`/api/tasks/${taskId}/complete`)
+      .set('Authorization', `Bearer ${otherToken}`);
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('PATCH /api/tasks/:id/complete returns 401 without auth', async () => {
+    const res = await request.patch(`/api/tasks/${taskId}/complete`);
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('GET /api/tasks/:id returns 404 for non-existent task', async () => {
+    const res = await request
+      .get('/api/tasks/99999')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 404);
+  });
+
+  test('GET /api/tasks/:id returns 401 without auth', async () => {
+    const res = await request.get(`/api/tasks/${taskId}`);
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('GET /api/completion-log returns audit trail', async () => {
+    const res = await request
+      .get('/api/completion-log')
+      .set('Authorization', `Bearer ${managerToken}`);
+
+    assert.strictEqual(res.status, 200);
+    assert.ok(Array.isArray(res.body.entries));
+    assert.ok(res.body.entries.length >= 1);
+
+    const entry = res.body.entries.find(e => e.task_id === taskId);
+    assert.ok(entry);
+    assert.strictEqual(entry.task_title, 'Complete me');
+    assert.strictEqual(entry.completed_by_name, 'Task Manager');
+    assert.ok(entry.completed_at);
+  });
+
+  test('GET /api/completion-log returns 401 without auth', async () => {
+    const res = await request.get('/api/completion-log');
+    assert.strictEqual(res.status, 401);
+  });
+
+  test('worker can complete a task', async () => {
+    const createRes = await request
+      .post('/api/tasks')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send({
+        title: 'Worker complete me',
+        location_type: 'drawing',
+        location_geojson: { type: 'Point', coordinates: [11, 11] },
+      });
+
+    assert.strictEqual(createRes.status, 201);
+    const workerTaskId = createRes.body.task.id;
+
+    const completeRes = await request
+      .patch(`/api/tasks/${workerTaskId}/complete`)
+      .set('Authorization', `Bearer ${workerToken}`);
+
+    assert.strictEqual(completeRes.status, 200);
+    assert.strictEqual(completeRes.body.task.status, 'done');
+    assert.strictEqual(completeRes.body.task.completed_by, JSON.parse(Buffer.from(workerToken.split('.')[1], 'base64').toString()).id);
+  });
+});
+
 describe('Map view data', () => {
   test('tasks data includes all fields needed for map rendering', async () => {
     const res = await request

@@ -169,4 +169,106 @@ router.patch('/api/tasks/reorder', authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
+router.patch('/api/tasks/:id/complete', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+
+  const task = db.prepare(
+    'SELECT id, farm_id, status FROM tasks WHERE id = ?'
+  ).get(id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  if (task.farm_id !== req.user.farm_id) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  if (task.status === 'done') {
+    return res.status(400).json({ error: 'Task is already completed' });
+  }
+
+  db.transaction(() => {
+    db.prepare(
+      `UPDATE tasks SET status = 'done', completed_by = ?, completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`
+    ).run(req.user.id, id);
+
+    db.prepare(
+      'INSERT INTO completion_log (task_id, user_id, completed_at) VALUES (?, ?, datetime(\'now\'))'
+    ).run(id, req.user.id);
+  })();
+
+  const updated = db.prepare(`
+    SELECT id, farm_id, title, status, priority, "order", location_geojson, location_type, paddock_id, assigned_to, created_by, completed_by, completed_at, created_at, updated_at
+    FROM tasks WHERE id = ?
+  `).get(id);
+
+  res.json({ task: updated });
+});
+
+router.get('/api/tasks/:id', authMiddleware, (req, res) => {
+  const { id } = req.params;
+  const db = getDb();
+
+  const task = db.prepare(`
+    SELECT
+      t.id,
+      t.farm_id,
+      t.title,
+      t.status,
+      t.priority,
+      t."order",
+      t.location_geojson,
+      t.location_type,
+      t.paddock_id,
+      t.assigned_to,
+      t.created_by,
+      t.completed_by,
+      t.completed_at,
+      t.created_at,
+      t.updated_at,
+      p.name AS paddock_name,
+      p.geometry_geojson AS paddock_geometry_geojson,
+      u.name AS assigned_to_name,
+      cb.name AS completed_by_name
+    FROM tasks t
+    LEFT JOIN paddocks p ON p.id = t.paddock_id
+    LEFT JOIN users u ON u.id = t.assigned_to
+    LEFT JOIN users cb ON cb.id = t.completed_by
+    WHERE t.id = ?
+  `).get(id);
+
+  if (!task) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  if (task.farm_id !== req.user.farm_id) {
+    return res.status(404).json({ error: 'Task not found' });
+  }
+
+  res.json({ task });
+});
+
+router.get('/api/completion-log', authMiddleware, (req, res) => {
+  const db = getDb();
+
+  const entries = db.prepare(`
+    SELECT
+      cl.id,
+      cl.task_id,
+      cl.user_id,
+      cl.completed_at,
+      t.title AS task_title,
+      u.name AS completed_by_name
+    FROM completion_log cl
+    LEFT JOIN tasks t ON t.id = cl.task_id
+    LEFT JOIN users u ON u.id = cl.user_id
+    WHERE t.farm_id = ?
+    ORDER BY cl.completed_at DESC
+  `).all(req.user.farm_id);
+
+  res.json({ entries });
+});
+
 module.exports = router;

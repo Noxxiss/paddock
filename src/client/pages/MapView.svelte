@@ -14,6 +14,8 @@
   let declutterActive = $state(false);
   let inViewCount = $state(0);
   let shownCount = $state(0);
+  let completing = $state(null);
+  let completeError = $state('');
 
   const DECLUTTER_THRESHOLD = 20;
   const PRIORITY_COLORS = {
@@ -40,6 +42,31 @@
       // silent fail for polling
     } finally {
       loading = false;
+    }
+  }
+
+  async function markComplete(taskId) {
+    completing = taskId;
+    completeError = '';
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok) {
+        map.closePopup();
+      } else {
+        const data = await res.json();
+        completeError = data.error || 'Failed to complete task';
+      }
+      await loadTasks();
+      if (map) renderTasks();
+    } catch {
+      completeError = 'Network error';
+      await loadTasks();
+      if (map) renderTasks();
+    } finally {
+      completing = null;
     }
   }
 
@@ -147,9 +174,13 @@
         : '';
 
       layer.bindPopup(`
-        <strong>${task.title}</strong><br>
-        Priority: <span class="priority-${task.priority}">${task.priority}</span><br>
-        Status: ${task.status}${assigneeInfo}${locationInfo}
+        <div class="task-popup" data-task-id="${task.id}">
+          <strong>${task.title}</strong><br>
+          Priority: <span class="priority-${task.priority}">${task.priority}</span><br>
+          Status: ${task.status}${assigneeInfo}${locationInfo}
+          <br>
+          <button class="complete-btn" data-task-id="${task.id}">Mark Complete</button>
+        </div>
       `);
 
       taskLayerGroup.addLayer(layer);
@@ -195,6 +226,18 @@
 
     map.on('moveend', () => {
       renderTasks();
+    });
+
+    map.on('popupopen', () => {
+      setTimeout(() => {
+        const btn = document.querySelector('.complete-btn');
+        if (btn) {
+          btn.onclick = () => {
+            const taskId = Number(btn.dataset.taskId);
+            if (taskId) markComplete(taskId);
+          };
+        }
+      }, 0);
     });
   }
 
@@ -253,6 +296,10 @@
     <div class="loading-overlay">
       <p>Loading tasks...</p>
     </div>
+  {/if}
+
+  {#if completeError}
+    <div class="error-bar">{completeError}</div>
   {/if}
 
   <div bind:this={mapContainer} class="map-container"></div>
@@ -382,5 +429,33 @@
 
   :global(.leaflet-popup-content strong) {
     font-size: 0.95rem;
+  }
+
+  .error-bar {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    background: #e74c3c;
+    color: white;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    z-index: 1001;
+  }
+
+  :global(.complete-btn) {
+    margin-top: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  :global(.complete-btn:hover) {
+    background: #219a52;
   }
 </style>
