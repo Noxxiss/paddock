@@ -10,6 +10,7 @@
     "dev:client": "vite",
     "build:client": "vite build",
     "test": "node --test test/*.test.js",
+    "postinstall": "patch-package",
     "db:init": "node -e \"require('./src/db').initialize()\"",
     "sandcastle": "npx tsx .sandcastle/main.mts"
   },
