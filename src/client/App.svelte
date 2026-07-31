@@ -120,7 +120,7 @@
     {:else if page === 'workers'}
       <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}
-      <PaddockList onback={() => page = 'farm-settings'} />
+      <PaddockList {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'create-task'}
       <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
     {:else if page === 'list'}
