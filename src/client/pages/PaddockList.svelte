@@ -146,7 +146,6 @@
   <div class="map-wrapper">
     <PaddockMap
       paddocks={paddocks}
-      farmBoundary={farm?.boundary_geojson}
       oncreate={handleCreate}
       onupdate={handleUpdate}
       ondelete={handleDelete}
