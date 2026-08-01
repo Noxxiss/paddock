@@ -112,10 +112,21 @@
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+  }
+
+  button[type="submit"]:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  button[type="submit"]:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
   }
 
   button[type="submit"]:disabled {
     opacity: 0.6;
+    cursor: default;
   }
 
   .error {
@@ -138,6 +149,21 @@
     font-size: 0.875rem;
     text-decoration: underline;
     padding: 0;
+    transition: color 0.15s ease;
+  }
+
+  .link:hover {
+    color: #357abd;
+  }
+
+  .link:active {
+    color: #2a5f94;
+  }
+
+  .hint {
+    color: #555;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
   }
 
   .hint {

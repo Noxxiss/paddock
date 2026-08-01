@@ -94,6 +94,8 @@
 
     const match = window.location.pathname.match(/^\/accept-invite\/([a-f0-9]+)$/);
     if (match) {
+      localStorage.removeItem('token');
+      token = null;
       inviteToken = match[1];
       page = 'register';
     }
@@ -116,11 +118,11 @@
     {:else if page === 'farm-setup'}
       <FarmSetup oncreate={handleCreate} />
     {:else if page === 'farm-settings'}
-      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} onmanageworkers={() => page = 'workers'} />
+      <FarmSettings farm={farm} onupdate={handleUpdate} onmanagepaddocks={() => page = 'paddocks'} onmanageworkers={() => page = 'workers'} onback={() => page = 'map'} />
     {:else if page === 'workers'}
       <WorkerManagement {farm} onback={() => page = 'farm-settings'} />
     {:else if page === 'paddocks'}
-      <PaddockList onback={() => page = 'farm-settings'} />
+      <PaddockList {farm} onback={() => page = 'farm-settings'} farmBoundary={farm.boundary_geojson && (typeof farm.boundary_geojson === 'string' ? JSON.parse(farm.boundary_geojson) : farm.boundary_geojson)} />
     {:else if page === 'create-task'}
       <TaskCreate {farm} onback={() => page = 'map'} oncreated={handleTaskCreated} />
     {:else if page === 'list'}
@@ -162,5 +164,20 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
+  }
+
+  button:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  button:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
   }
 </style>

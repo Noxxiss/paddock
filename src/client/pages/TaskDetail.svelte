@@ -238,10 +238,16 @@
     font-size: 0.85rem;
     cursor: pointer;
     flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.12s ease;
   }
 
   .back-btn:hover {
     background: rgba(255,255,255,0.2);
+  }
+
+  .back-btn:active {
+    background: rgba(255,255,255,0.3);
+    transform: scale(0.97);
   }
 
   .loading-overlay {
@@ -418,10 +424,16 @@
     border-radius: 4px;
     font-size: 0.85rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
   }
 
-  .comment-form button:hover {
+  .comment-form button:hover:not(:disabled) {
     background: #357abd;
+  }
+
+  .comment-form button:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
   }
 
   .comment-form button:disabled {

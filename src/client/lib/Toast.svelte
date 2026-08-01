@@ -90,9 +90,15 @@
     opacity: 0.7;
     padding: 0;
     line-height: 1;
+    transition: opacity 0.15s ease, transform 0.12s ease;
   }
 
   .toast-close:hover {
     opacity: 1;
+  }
+
+  .toast-close:active {
+    opacity: 1;
+    transform: scale(0.9);
   }
 </style>

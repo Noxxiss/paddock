@@ -191,11 +191,14 @@
     }
   }
 
-  onMount(() => {
-    Promise.all([loadPaddocks(), loadWorkers()]).then(() => { loading = false; });
+  $effect(() => {
     if (mapContainer && !map) {
       initMap();
     }
+  });
+
+  onMount(() => {
+    Promise.all([loadPaddocks(), loadWorkers()]).then(() => { loading = false; });
   });
 
   onDestroy(() => {
@@ -302,6 +305,18 @@
     border-radius: 4px;
     font-size: 0.875rem;
     cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  }
+
+  .back:hover:not(:disabled) {
+    background: #4a90d9;
+    color: white;
+  }
+
+  .back:active:not(:disabled) {
+    background: #357abd;
+    color: white;
+    transform: scale(0.97);
   }
 
   form {
@@ -384,10 +399,21 @@
     border-radius: 4px;
     font-size: 1rem;
     cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
+  }
+
+  button[type="submit"]:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  button[type="submit"]:active:not(:disabled) {
+    background: #2a5f94;
+    transform: scale(0.97);
   }
 
   button[type="submit"]:disabled {
     opacity: 0.6;
+    cursor: default;
   }
 
   .error {

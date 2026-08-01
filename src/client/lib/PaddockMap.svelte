@@ -9,7 +9,9 @@
   import { snapPoint } from './snapping-dom.js';
   import { getSnapCandidates } from './snapping.js';
 
-  let { paddocks: initialPaddocks = [], oncreate, onupdate, ondelete } = $props();
+  import { isGeometryOutsideBoundary } from './geometry.js';
+
+  let { paddocks: initialPaddocks = [], farmBoundary = null, oncreate, onupdate, ondelete } = $props();
 
   let mapContainer = $state(null);
   let map;
@@ -63,6 +65,11 @@
 
     if (bounds) {
       map.fitBounds(bounds, { padding: [20, 20] });
+    } else if (farmBoundary) {
+      const geometry = typeof farmBoundary === 'string' ? JSON.parse(farmBoundary) : farmBoundary;
+      const boundaryLayer = L.geoJSON(geometry, {});
+      boundaryLayer.addTo(map);
+      map.fitBounds(boundaryLayer.getBounds(), { padding: [20, 20] });
     }
   }
 
@@ -140,6 +147,7 @@
     drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
+    map.invalidateSize();
     rebuild();
 
     const drawControl = new L.Control.Draw({
@@ -187,6 +195,11 @@
         }
       }
       const geometry = e.layer.toGeoJSON().geometry;
+      if (farmBoundary && isGeometryOutsideBoundary(geometry, farmBoundary)) {
+        alert('Paddock must be within the farm boundary');
+        drawnItems.removeLayer(e.layer);
+        return;
+      }
       const name = prompt('Name this paddock:');
       if (name && name.trim()) {
         drawnItems.addLayer(e.layer);
@@ -200,6 +213,11 @@
         if (id && onupdate) {
           const geometry = layerToGeometry(layer);
           if (geometry) {
+            if (farmBoundary && isGeometryOutsideBoundary(geometry, farmBoundary)) {
+              alert('Paddock must be within the farm boundary');
+              rebuild();
+              return;
+            }
             onupdate(id, { geometry_geojson: geometry });
           }
         }

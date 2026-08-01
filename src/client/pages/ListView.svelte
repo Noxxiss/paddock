@@ -291,10 +291,16 @@
     font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
+    transition: background 0.15s ease, opacity 0.15s ease, transform 0.12s ease;
   }
 
   .header-btn:hover {
     background: rgba(255,255,255,0.2);
+  }
+
+  .header-btn:active {
+    background: rgba(255,255,255,0.3);
+    transform: scale(0.97);
   }
 
   .header-btn.secondary {
@@ -306,6 +312,12 @@
   .header-btn.secondary:hover {
     opacity: 1;
     background: rgba(255,255,255,0.1);
+  }
+
+  .header-btn.secondary:active {
+    opacity: 1;
+    background: rgba(255,255,255,0.2);
+    transform: scale(0.97);
   }
 
   .loading-overlay {
@@ -462,10 +474,16 @@
     border-radius: 4px;
     cursor: pointer;
     margin-left: 8px;
+    transition: background 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
   }
 
-  .complete-btn:hover {
+  .complete-btn:hover:not(:disabled) {
     background: #219a52;
+  }
+
+  .complete-btn:active:not(:disabled) {
+    background: #1a7a3e;
+    transform: scale(0.97);
   }
 
   .complete-btn:disabled {
